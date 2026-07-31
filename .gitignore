@@ -1,0 +1,89 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+pipenv-env/
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Virtual environments
+venv/
+.env
+.env.*
+!.env.example
+
+# IDE / Editor
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*.swo
+*~
+.history/
+
+# Project
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Local config
+instance/
+*.sqlite3
+db.sqlite3
+db.sqlite3-journal
+
+# Distribution / Packaging
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# FastAPI / Backend runtime
+.logs/
+
+# React / Frontend (kept separate under /frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build outputs
+frontend/dist/
+frontend/build/
+
+# OS
+Thumbs.db
+
+# Project files not for version control
+extracted_text.txt
+Continue
