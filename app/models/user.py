@@ -1,7 +1,6 @@
 import enum
-from datetime import datetime
 from sqlalchemy import Column, DateTime, Enum, Integer, String
-from app.core.database import Base
+from app.core.database import Base, utcnow
 
 
 class UserRole(str, enum.Enum):
@@ -19,4 +18,4 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     role = Column(Enum(UserRole), default=UserRole.LABELER, nullable=False)
     is_active = Column(Integer, default=1, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utcnow, nullable=False)

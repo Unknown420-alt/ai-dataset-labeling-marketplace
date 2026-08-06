@@ -17,6 +17,7 @@ class LabelTaskCreate(LabelTaskBase):
 
 class LabelTaskPublic(BaseModel):
     id: int
+    dataset_id: int
     title: str
     instructions: str
     label_schema: dict

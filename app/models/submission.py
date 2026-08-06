@@ -1,6 +1,5 @@
-from datetime import datetime
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, JSON, String
-from app.core.database import Base
+from app.core.database import Base, utcnow
 
 
 class LabelSubmission(Base):
@@ -11,4 +10,4 @@ class LabelSubmission(Base):
     labeler_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     label_value = Column(JSON, nullable=False)
     source = Column(String(50), default="human")
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utcnow, nullable=False)

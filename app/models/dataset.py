@@ -1,7 +1,6 @@
 import enum
-from datetime import datetime
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Text
-from app.core.database import Base
+from app.core.database import Base, utcnow
 
 
 class DatasetStatus(str, enum.Enum):
@@ -22,4 +21,4 @@ class Dataset(Base):
     file_type = Column(String(20), nullable=False)
     total_items = Column(Integer, default=0)
     status = Column(Enum(DatasetStatus), default=DatasetStatus.UPLOADED, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utcnow, nullable=False)

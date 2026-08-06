@@ -15,6 +15,11 @@ class UserCreate(BaseModel):
     role: UserRole = UserRole.LABELER
 
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
 class UserPublic(BaseModel):
     id: int
     email: str
@@ -24,3 +29,9 @@ class UserPublic(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserPublic

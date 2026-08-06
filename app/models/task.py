@@ -1,7 +1,6 @@
 import enum
-from datetime import datetime
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Text, JSON, Float
-from app.core.database import Base
+from app.core.database import Base, utcnow
 
 
 class TaskStatus(str, enum.Enum):
@@ -22,4 +21,4 @@ class LabelTask(Base):
     num_labelers = Column(Integer, default=3, nullable=False)
     ai_enabled = Column(Integer, default=0, nullable=False)
     status = Column(Enum(TaskStatus), default=TaskStatus.DRAFT, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
