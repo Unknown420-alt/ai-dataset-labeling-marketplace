@@ -24,7 +24,7 @@ flowchart LR
     SVC --> MOD
     MOD --> DB
     MIG --> DB
-    API -.->|AI suggestions<br/>(planned)| EXT
+    API -.->|AI suggestions - planned| EXT
 
     subgraph Hosting["Hosting (planned)"]
         FE_HOST[Vercel - frontend]
