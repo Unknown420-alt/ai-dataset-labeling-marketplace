@@ -63,6 +63,8 @@ classDiagram
     class LabelTask
     class DataItem
     class LabelSubmission
+    class TaskClaim
+    class AISuggestion
 
     FastAPI_App --> APIRouter : mounts
     APIRouter --> AuthRoutes
@@ -84,6 +86,8 @@ classDiagram
     LabelTask --> Database : Base
     DataItem --> Database : Base
     LabelSubmission --> Database : Base
+    TaskClaim --> Database : Base
+    AISuggestion --> Database : Base
 ```
 
 ## Notes

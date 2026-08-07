@@ -9,7 +9,7 @@ flowchart LR
     subgraph Backend["FastAPI backend (app/)"]
         API[API v1 routers<br/>health / auth / users / datasets / tasks]
         SVC[Services<br/>security / JWT / bcrypt]
-        MOD[Models<br/>User Dataset LabelTask DataItem LabelSubmission]
+        MOD[Models<br/>User Dataset LabelTask DataItem<br/>LabelSubmission TaskClaim AISuggestion]
     end
 
     subgraph Data["Data layer"]
@@ -25,6 +25,12 @@ flowchart LR
     MOD --> DB
     MIG --> DB
     API -.->|AI suggestions<br/>(planned)| EXT
+
+    subgraph Hosting["Hosting (planned)"]
+        FE_HOST[Vercel - frontend]
+        BE_HOST[Render - backend API]
+        DB_HOST[Railway / Aiven - PostgreSQL]
+    end
 ```
 
 ## Notes
@@ -36,3 +42,5 @@ flowchart LR
   role; protected routes resolve the current user via a FastAPI dependency.
 - All DB access is async SQLAlchemy. Alembic owns schema changes.
 - The AI suggestion service is intentionally stubbed until later sprints.
+- Hosting boundary: frontend on Vercel, backend API on Render, managed
+  PostgreSQL on Railway/Aiven - wiring this up is Day 41 work.

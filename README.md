@@ -12,7 +12,7 @@ SQLAlchemy (async), and SQLite for local dev (PostgreSQL in production).
 - **Auth** - signup / login / refresh, issues real JWTs, bcrypt-hashed passwords
 - **Datasets** - create, list, get (only your own)
 - **Label tasks** - create and list labeling work against a dataset
-- **Migrations** - Alembic manages the schema (5 tables)
+- **Migrations** - Alembic manages the schema (7 tables)
 - **Tests** - health check + a full signup -> login -> dataset -> task flow
 
 ## Tech stack
@@ -34,7 +34,7 @@ SQLAlchemy (async), and SQLite for local dev (PostgreSQL in production).
 ├── app/
 │   ├── api/v1/           # routers: health, auth, users, datasets, tasks
 │   ├── core/             # config, database engine
-│   ├── models/           # SQLAlchemy models (5 tables)
+│   ├── models/           # SQLAlchemy models (7 tables)
 │   ├── schemas/          # pydantic request/response models
 │   └── services/         # security (JWT, bcrypt), business logic
 ├── tests/                # pytest suite
@@ -66,7 +66,7 @@ SQLAlchemy (async), and SQLite for local dev (PostgreSQL in production).
    python -m alembic -c alembic.ini upgrade head
    ```
 
-   This builds the blank `marketplace.db` with all 5 tables.
+   This builds the blank `marketplace.db` with all 7 tables.
 
 5. **Run the server**
 

@@ -4,11 +4,14 @@
 erDiagram
     users ||--o{ datasets : owns
     users ||--o{ label_tasks : creates
+    users ||--o{ label_submissions : submits
+    users ||--o{ task_claims : claims
     datasets ||--o{ label_tasks : has
     datasets ||--o{ data_items : contains
     label_tasks ||--o{ data_items : contains
+    label_tasks ||--o{ task_claims : has
     data_items ||--o{ label_submissions : gets
-    users ||--o{ label_submissions : submits
+    data_items ||--o{ ai_suggestions : predicts
 
     users {
         int id PK
@@ -63,6 +66,25 @@ erDiagram
         string source
         datetime created_at
     }
+
+    task_claims {
+        int id PK
+        int task_id FK
+        int labeler_id FK
+        int assigned_count
+        string status
+        datetime claimed_at
+        datetime completed_at
+    }
+
+    ai_suggestions {
+        int id PK
+        int item_id FK
+        string model_name
+        float confidence_score
+        json prediction_json
+        datetime created_at
+    }
 ```
 
 ## Notes
@@ -70,7 +92,9 @@ erDiagram
 - `users.role` is one of `owner | labeler | admin`.
 - A dataset belongs to one owner. Label tasks hang off a dataset; each dataset
   row becomes a `data_items` row per label task.
-- Labelers submit labels through `label_submissions`, keyed to an item. Multiple
+- Labelers claim work through `task_claims` (junction between task + labeler,
+  with a claim status) then submit labels in `label_submissions`. Multiple
   labelers can label the same item (that's the `num_labelers` setting).
-- `ai_suggestion` / `ai_confidence` on items feed the human-in-the-loop flow
-  planned for later sprints.
+- `ai_suggestions` stores model predictions per item; `ai_suggestion` /
+  `ai_confidence` on the item itself feed the human-in-the-loop flow planned
+  for later sprints. 7 tables total.
