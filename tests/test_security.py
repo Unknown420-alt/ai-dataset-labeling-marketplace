@@ -1,5 +1,11 @@
 """Unit tests for password hashing and JWT token helpers."""
-from app.services.security import hash_password, verify_password, make_token, verify_token
+
+from app.services.security import (
+    hash_password,
+    verify_password,
+    make_token,
+    verify_token,
+)
 
 
 def test_password_round_trip():

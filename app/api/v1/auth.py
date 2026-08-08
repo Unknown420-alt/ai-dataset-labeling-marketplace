@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -10,6 +11,7 @@ from app.services.security import (
     make_token,
     get_current_user,
 )
+from app.services.responses import ok
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -19,11 +21,9 @@ def _build_auth_response(user: User) -> AuthResponse:
     return AuthResponse(access_token=token, user=UserPublic.model_validate(user))
 
 
-@router.post("/signup", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/signup", status_code=status.HTTP_201_CREATED)
 async def signup(payload: UserCreate, db: AsyncSession = Depends(get_db)):
-    from sqlalchemy import select as _select
-
-    existing = await db.execute(_select(User).where(User.email == payload.email))
+    existing = await db.execute(select(User).where(User.email == payload.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="Email already registered")
 
@@ -37,26 +37,24 @@ async def signup(payload: UserCreate, db: AsyncSession = Depends(get_db)):
     await db.commit()
     await db.refresh(user)
 
-    return _build_auth_response(user)
+    return ok(_build_auth_response(user), "Account created")
 
 
-@router.post("/login", response_model=AuthResponse)
+@router.post("/login")
 async def login(payload: UserLogin, db: AsyncSession = Depends(get_db)):
-    from sqlalchemy import select as _select
-
-    result = await db.execute(_select(User).where(User.email == payload.email))
+    result = await db.execute(select(User).where(User.email == payload.email))
     user = result.scalar_one_or_none()
     if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Wrong email or password")
 
-    return _build_auth_response(user)
+    return ok(_build_auth_response(user), "Logged in")
 
 
-@router.get("/me", response_model=UserPublic)
+@router.get("/me")
 async def read_users_me(current: User = Depends(get_current_user)):
-    return current
+    return ok(UserPublic.model_validate(current), "Current user")
 
 
-@router.post("/refresh", response_model=AuthResponse)
+@router.post("/refresh")
 async def refresh_token(current: User = Depends(get_current_user)):
-    return _build_auth_response(current)
+    return ok(_build_auth_response(current), "Token refreshed")

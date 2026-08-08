@@ -5,12 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.schemas.task import LabelTaskCreate, LabelTaskPublic
 from app.services.security import get_current_user
+from app.services.responses import ok
 from app.models import User, LabelTask
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
-@router.post("/", response_model=LabelTaskPublic, status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_task(
     payload: LabelTaskCreate,
     current: User = Depends(get_current_user),
@@ -27,13 +28,17 @@ async def create_task(
     db.add(task)
     await db.commit()
     await db.refresh(task)
-    return task
+    return ok(LabelTaskPublic.model_validate(task), "Task created")
 
 
-@router.get("/", response_model=list[LabelTaskPublic])
+@router.get("/")
 async def list_tasks(
     current: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(LabelTask))
-    return result.scalars().all()
+    tasks = result.scalars().all()
+    return ok(
+        [LabelTaskPublic.model_validate(t) for t in tasks],
+        "Tasks listed",
+    )

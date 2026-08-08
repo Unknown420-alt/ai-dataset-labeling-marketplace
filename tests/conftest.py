@@ -4,6 +4,7 @@ Points the app at a throwaway SQLite database so test runs never touch the
 real dev database (marketplace.db). Env vars must be set before the app is
 imported, hence the top-of-file assignment.
 """
+
 import os
 import asyncio
 

@@ -1,5 +1,15 @@
 import enum
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Text, JSON, Float
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    JSON,
+    Float,
+)
 from app.core.database import Base, utcnow
 
 

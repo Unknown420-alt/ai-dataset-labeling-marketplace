@@ -12,7 +12,9 @@ class Settings(BaseSettings):
     secret_key: str = "dev-secret-key-change-me"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/marketplace"
+    database_url: str = (
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/marketplace"
+    )
     environment: str = "development"
 
 

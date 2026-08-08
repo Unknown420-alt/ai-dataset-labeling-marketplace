@@ -10,7 +10,9 @@ ALLOWED_MIME_TYPES = {
 }
 
 
-def validate_upload(filename: str, mime_type: str, max_size_mb: int = 5) -> tuple[bool, Optional[str]]:
+def validate_upload(
+    filename: str, mime_type: str, max_size_mb: int = 5
+) -> tuple[bool, Optional[str]]:
     """Check if an uploaded file is safe. Returns (ok, error_message)."""
     _, ext = os.path.splitext(filename)
     ext = ext.lower()

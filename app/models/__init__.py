@@ -7,9 +7,12 @@ from app.models.task_claim import TaskClaim
 from app.models.ai_suggestion import AISuggestion
 
 __all__ = [
-    "User", "UserRole",
-    "Dataset", "DatasetStatus",
-    "LabelTask", "TaskStatus",
+    "User",
+    "UserRole",
+    "Dataset",
+    "DatasetStatus",
+    "LabelTask",
+    "TaskStatus",
     "DataItem",
     "LabelSubmission",
     "TaskClaim",

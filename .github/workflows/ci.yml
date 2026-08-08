@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  lint-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,4 +15,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -r requirements.txt
-      - run: python -m pytest tests/ -v
+      - name: Lint (black)
+        run: python -m black --check app tests
+      - name: Tests
+        run: python -m pytest tests/ -v

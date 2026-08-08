@@ -32,7 +32,9 @@ def verify_password(plain: str, hashed: str) -> bool:
 def make_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     now = datetime.now(timezone.utc)
     to_encode = data.copy()
-    expire = now + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
+    expire = now + (
+        expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
+    )
     to_encode.update({"exp": expire, "iat": now})
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
@@ -43,7 +45,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def verify_token(token: str) -> dict:
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        payload = jwt.decode(
+            token, settings.secret_key, algorithms=[settings.algorithm]
+        )
         if "sub" not in payload:
             raise JWTError("missing sub")
         return payload
