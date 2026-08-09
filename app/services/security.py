@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
@@ -30,7 +30,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def make_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     to_encode = data.copy()
     expire = now + (
         expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
