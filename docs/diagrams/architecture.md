@@ -7,7 +7,7 @@ flowchart LR
     end
 
     subgraph Backend["FastAPI backend (app/)"]
-        API[API v1 routers<br/>health / auth / users / datasets / tasks]
+        API[API v1 routers<br/>health / auth / datasets / tasks / labeling]
         SVC[Services<br/>security / JWT / bcrypt]
         MOD[Models<br/>User Dataset LabelTask DataItem<br/>LabelSubmission TaskClaim AISuggestion]
     end
