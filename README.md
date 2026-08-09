@@ -184,4 +184,5 @@ This project is for academic use under the R2021 Sem 5 capstone program.
 
 ## Author / Contact
 
-Team member — full name and contact to be added to the report. Project guide: [guide name].
+S Girivasan — stugirivasan10143@gmail.com
+Project Guide: [Name]
