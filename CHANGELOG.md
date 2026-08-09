@@ -7,10 +7,14 @@
 - Repo initialized with boilerplate (gitignore, LICENSE, env example).
 - FastAPI backend scaffolded with health endpoint.
 - Auth added: signup and login issuing real JWTs, bcrypt password hashing.
-- Databases and label tasks created with owner scoping.
+- Datasets and label tasks created with owner scoping.
 - Alembic migrations added for the full 7-table schema.
-- Integration tests cover signup -> login -> dataset -> task flows.
-- CI runs pytest on push/PR to main.
+- Response envelope standardized: every endpoint returns { success, data, message }.
+- Labeler flow added: claim a task, upload CSV items, submit labels.
+- React frontend added (Vite + Tailwind + Axios): auth, dashboard, labeling screens.
+- Docker Compose added for local PostgreSQL development.
+- Integration tests cover auth, dataset/task flows, and the full labeler flow.
+- CI runs black lint + pytest on every push/PR to main, and builds the frontend.
 
 ## Week 1
 
