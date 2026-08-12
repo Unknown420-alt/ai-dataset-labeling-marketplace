@@ -1,4 +1,5 @@
 import asyncio
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import pool
@@ -16,7 +17,10 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# Prefer DIRECT_URL (direct Supabase connection) for DDL; fall back to DATABASE_URL.
+# This avoids pgbouncer DDL failures when DATABASE_URL points at pooler 6543.
+_db_url = os.getenv("DIRECT_URL") or os.getenv("DATABASE_URL") or settings.database_url
+config.set_main_option("sqlalchemy.url", _db_url)
 
 target_metadata = Base.metadata
 
@@ -49,10 +53,15 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
+    url = config.get_main_option("sqlalchemy.url") or ""
+    extra_kwargs: dict = {}
+    if "ssl=require" in url:
+        extra_kwargs["connect_args"] = {"ssl": True}
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        **extra_kwargs,
     )
 
     async with connectable.connect() as connection:
