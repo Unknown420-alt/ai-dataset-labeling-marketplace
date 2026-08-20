@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import os
 
 from app.api.v1.router import router as api_router
 
@@ -34,9 +35,15 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
     )
 
 
+frontend_url = os.getenv("FRONTEND_URL", "")
+
+allow_origins = ["http://localhost:5173", "http://localhost:3000"]
+if frontend_url:
+    allow_origins.append(frontend_url.rstrip("/"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,3 +59,8 @@ async def root():
         "data": {"name": "AI Dataset Labeling Marketplace", "version": "0.1.0"},
         "message": "API is running. Check /docs for endpoints.",
     }
+
+
+@app.get("/health")
+async def health():
+    return {"success": True, "data": {"status": "ok"}, "message": "healthy"}
