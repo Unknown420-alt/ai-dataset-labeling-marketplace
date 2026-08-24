@@ -42,7 +42,7 @@ if "!PORT_BUSY!"=="1" (
 echo Ports 8000 and 5173 are free. Starting fresh.
 echo.
 
-REM --- 2. Apply database migrations (SQLite default) ---
+REM --- 2. Apply database migrations (Postgres) ---
 echo [1/3] Applying database migrations...
 cd /d "%ROOT%"
 python -m alembic upgrade head
