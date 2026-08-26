@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: labeling-marketplace-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    preDeployCommand: python -m alembic upgrade head && python scripts/seed_cloud.py
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
