@@ -88,3 +88,10 @@ Thumbs.db
 # Project files not for version control
 extracted_text.txt
 .playwright-mcp/
+
+# Runtime / Generated
+backend.log
+test_marketplace.db
+
+# Internal planning (do not commit)
+.omo/
