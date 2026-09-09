@@ -2,13 +2,35 @@
 
 _A place where dataset owners get their raw data labeled by a distributed crowd of labelers, with an AI assistant in the loop._
 
+<!-- BADGES — replace <RENDER_URL> with your Render service URL, <VERCEL_URL> with your Vercel deploy URL -->
+[![CI](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg)](https://github.com/<OWNER>/<REPO>/actions)
+[![Render Health](https://img.shields.io/badge/Render-health--check-brightgreen?logo=render)](RENDER_HEALTH_URL)
+[![Coverage](https://img.shields.io/badge/coverage-13%2F13%20tests-blue)](#running-tests)
+
 ## Live Demo
 
-Not yet — the product goes live on a public URL by Day 41 (see Review-II). Coming soon: frontend on Vercel, backend + database on Render/Railway.
+| Component | URL |
+| --------- | --- |
+| Frontend  | `https://<VERCEL_URL>.vercel.app` |
+| Backend   | `https://<RENDER_URL>.onrender.com` |
+| API docs  | `https://<RENDER_URL>.onrender.com/docs` |
+
+> **Health check:** `GET /health` should return `{"success":true,"data":{"status":"ok"},"message":"healthy"}`.
 
 ## Overview
 
 Dataset owners publish raw data (CSV today) and create labeling tasks against it. Labelers claim those tasks and label each row; the AI assistant suggests a label per item which the human can confirm or correct. Every label is stored per labeler, so the owner ends up with a clean, human-reviewed dataset ready for training.
+
+## Demo Credentials
+
+Seeded automatically on first deploy via `scripts/seed_cloud.py`:
+
+| Role    | Email              | Password      |
+| ------- | ------------------ | ------------- |
+| Owner   | owner@demo.com     | ReviewPass123 |
+| Labeler | labeler@demo.com   | ReviewPass123 |
+
+> These are idempotent. The seed script skips them if they already exist.
 
 ## Architecture Diagram
 
@@ -30,7 +52,7 @@ Matches Section 4 of the project specification (Python track).
 | Testing          | Pytest (unit tests mandatory)                     |
 | API docs         | Auto-generated Swagger UI at `/docs`              |
 | CI/CD            | GitHub Actions (lint + tests)                     |
-| Hosting (Day 41) | Vercel/Netlify (frontend), Render/Railway (backend) |
+| Hosting (Day 41) | Vercel (frontend), Render (backend + database)    |
 
 ## Features
 
@@ -119,19 +141,52 @@ npm run dev
 
 Open http://127.0.0.1:5173 — the Vite dev server proxies `/api` to the backend.
 
+### 6. Seed demo users (optional, local)
+
+```bash
+python scripts/seed_cloud.py
+```
+
+Creates `owner@demo.com` / `labeler@demo.com` with password `ReviewPass123`.
+
 ## Environment Variables
+
+### Backend (`.env` or Render env vars)
 
 | Variable | Description | Required |
 | -------- | ----------- | -------- |
 | `SECRET_KEY` | JWT signing secret — pick a long random string | Yes |
 | `DATABASE_URL` | SQLAlchemy async DB URL (Postgres or SQLite) | Yes |
+| `DIRECT_URL` | Direct connection URL (for Alembic migrations) | Render only |
 | `ALGORITHM` | JWT algorithm, keep `HS256` | Yes |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Token lifetime in minutes | Yes |
 | `ENVIRONMENT` | `development` / `production` | Yes |
+| `FRONTEND_URL` | Full Vercel URL for CORS (e.g. `https://your-app.vercel.app`) | Production |
+
+### Frontend (Vercel env vars)
+
+| Variable | Description | Required |
+| -------- | ----------- | -------- |
+| `VITE_API_URL` | Backend API base URL — **must include `/api/v1` suffix** | Yes (prod) |
+
+**VITE_API_URL contract:**
+
+The frontend reads `import.meta.env.VITE_API_URL || '/api/v1'` (see `frontend/src/api.js`).
+
+- **Production:** set to `https://<RENDER_URL>.onrender.com/api/v1` (trailing `/api/v1` is mandatory)
+- **Local dev:** leave unset; the Vite dev server proxies `/api` to the backend automatically
+- **Why `/api/v1`:** all backend routes are mounted under the `/api/v1` prefix (`app/api/v1/`). Without this suffix the frontend would 404 on every request.
+
+Example Vercel configuration:
+```
+VITE_API_URL=https://labeling-marketplace-api.onrender.com/api/v1
+```
 
 ## API Documentation
 
-Swagger UI is served at http://127.0.0.1:8000/docs (production URL once hosted on Day 41).
+Swagger UI is served at:
+- **Local:** http://127.0.0.1:8000/docs
+- **Production:** `https://<RENDER_URL>.onrender.com/docs`
 
 ## Running Tests
 
@@ -139,14 +194,19 @@ Swagger UI is served at http://127.0.0.1:8000/docs (production URL once hosted o
 python -m pytest
 ```
 
-Covers auth, datasets/tasks, the full labeler flow (claim → items → submit), and security helpers. A `black --check` lint gate runs in CI.
+Current coverage: **13 tests** across auth, datasets/tasks, the full labeler flow (claim → items → submit), and security helpers. A `black --check` lint gate runs in CI.
 
 ## Deployment
 
-Deployment begins in Week 6:
-- Backend + PostgreSQL → Render or Railway
-- Frontend → Vercel or Netlify
-- GitHub Actions triggers on every push/PR to `main`: install deps → lint → run tests; deploy step added from Week 6 onward.
+| Component | Platform | URL |
+| --------- | -------- | --- |
+| Frontend  | Vercel   | `https://<VERCEL_URL>.vercel.app` |
+| Backend   | Render   | `https://<RENDER_URL>.onrender.com` |
+| Database  | Supabase (PostgreSQL) | Configured via `DATABASE_URL` / `DIRECT_URL` |
+
+**CI pipeline** (`.github/workflows/ci.yml`): lint (black) → test (pytest) on every push/PR to `main`.
+
+**Render pre-deploy:** `alembic upgrade head` → `seed_cloud.py` (idempotent).
 
 ## Folder Structure
 
@@ -162,12 +222,15 @@ Deployment begins in Week 6:
 │   └── services/          # security, responses, upload helpers
 ├── docs/diagrams/         # architecture, ER, module diagrams
 ├── frontend/              # React + Tailwind + Axios SPA
-│   └── src/components/    # auth, owner, and labeler screens
-├── tests/                 # pytest suite
+│   └── src/               # components (auth, owner, labeler), api.js, App.jsx
+├── scripts/               # seed_cloud.py (demo data)
+├── tests/                 # pytest suite (13 tests)
 ├── data/                  # sample CSV for quick demos
 ├── .env.example
 ├── Problem_Statement.md
 ├── requirements.txt
+├── render.yaml            # Render service definition
+├── Procfile               # Railway/Heroku fallback
 └── docker-compose.yml     # PostgreSQL 15 for local dev
 ```
 
