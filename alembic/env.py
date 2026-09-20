@@ -1,5 +1,6 @@
 import asyncio
 import os
+import ssl
 from logging.config import fileConfig
 
 from sqlalchemy import pool
@@ -52,11 +53,18 @@ def do_run_migrations(connection: Connection) -> None:
         context.run_migrations()
 
 
+def _unverified_ssl_context() -> ssl.SSLContext:
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    return ctx
+
+
 async def run_async_migrations() -> None:
     url = config.get_main_option("sqlalchemy.url") or ""
     extra_kwargs: dict = {}
     if "ssl=require" in url:
-        extra_kwargs["connect_args"] = {"ssl": True}
+        extra_kwargs["connect_args"] = {"ssl": _unverified_ssl_context()}
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

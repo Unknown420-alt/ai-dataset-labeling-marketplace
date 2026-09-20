@@ -1,3 +1,4 @@
+import ssl
 from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -6,10 +7,17 @@ from sqlalchemy.orm import declarative_base
 from app.core.config import settings
 
 
+def _unverified_ssl_context() -> ssl.SSLContext:
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    return ctx
+
+
 def _engine_kwargs(url: str) -> dict:
     kw: dict = {"echo": False}
     if "ssl=require" in url:
-        kw["connect_args"] = {"ssl": True}
+        kw["connect_args"] = {"ssl": _unverified_ssl_context()}
     if not url.startswith("sqlite"):
         kw.update(pool_size=10, max_overflow=20, pool_pre_ping=True)
     return kw
