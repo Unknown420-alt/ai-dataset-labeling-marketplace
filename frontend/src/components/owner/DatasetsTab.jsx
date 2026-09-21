@@ -24,6 +24,13 @@ export default function DatasetsTab() {
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
 
+  const [selectedDatasetId, setSelectedDatasetId] = useState('')
+  const [training, setTraining] = useState(false)
+  const [trainResult, setTrainResult] = useState(null)
+  const [predictText, setPredictText] = useState('')
+  const [predicting, setPredicting] = useState(false)
+  const [predictResult, setPredictResult] = useState(null)
+
   async function load() {
     try {
       setLoading(true)
@@ -82,6 +89,39 @@ export default function DatasetsTab() {
   function startEdit(d) {
     setEditingId(d.id)
     setEditName(d.name)
+  }
+
+  async function handleTrain() {
+    if (!selectedDatasetId) return
+    setTraining(true)
+    setTrainResult(null)
+    setPredictResult(null)
+    setError('')
+    try {
+      const res = await api.post(`/datasets/${selectedDatasetId}/train`)
+      setTrainResult(res.data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setTraining(false)
+    }
+  }
+
+  async function handlePredict() {
+    if (!selectedDatasetId || !predictText.trim()) return
+    setPredicting(true)
+    setPredictResult(null)
+    setError('')
+    try {
+      const res = await api.post(`/datasets/${selectedDatasetId}/predict`, {
+        text: predictText.trim(),
+      })
+      setPredictResult(res.data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setPredicting(false)
+    }
   }
 
   return (
@@ -225,6 +265,91 @@ export default function DatasetsTab() {
           </Table>
         )}
       </Card>
+
+      {datasets.length > 0 && (
+        <Card>
+          <CardHeader
+            title="Train & predict"
+            subtitle="Train a TF-IDF + Naive Bayes classifier on labeled data, then predict new text."
+          />
+          <div className="mt-4 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select
+                value={selectedDatasetId}
+                onChange={(e) => {
+                  setSelectedDatasetId(e.target.value)
+                  setTrainResult(null)
+                  setPredictResult(null)
+                }}
+                className="sm:w-64"
+              >
+                <option value="">Select a dataset</option>
+                {datasets.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.total_items} items)
+                  </option>
+                ))}
+              </Select>
+              <Button
+                variant="success"
+                loading={training}
+                disabled={!selectedDatasetId}
+                onClick={handleTrain}
+              >
+                Train model
+              </Button>
+            </div>
+
+            {trainResult && (
+              <div className="flex flex-wrap gap-3">
+                <Badge variant="success" dot>
+                  Accuracy: {(trainResult.accuracy * 100).toFixed(1)}%
+                </Badge>
+                <Badge variant="info">
+                  Labeled: {trainResult.labeled_count}
+                </Badge>
+                <Badge variant="default">
+                  Total: {trainResult.total_items}
+                </Badge>
+              </div>
+            )}
+
+            {trainResult && (
+              <div className="border-t border-sand-100 pt-4">
+                <p className="text-sm text-sand-600 mb-2">Try a prediction</p>
+                <div className="flex gap-2">
+                  <input
+                    value={predictText}
+                    onChange={(e) => setPredictText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handlePredict()
+                    }}
+                    placeholder="Enter text to classify…"
+                    className="flex-1 min-w-0 px-3 py-2 text-sm rounded-lg border border-sand-200 focus:ring-2 focus:ring-sky-100 focus:border-sky-400"
+                  />
+                  <Button
+                    variant="primary"
+                    loading={predicting}
+                    disabled={!predictText.trim()}
+                    onClick={handlePredict}
+                  >
+                    Predict
+                  </Button>
+                </div>
+                {predictResult && (
+                  <div className="mt-2 flex items-center gap-2 text-sm">
+                    <span className="text-sand-500">Result:</span>
+                    <Badge variant="success">{predictResult.label}</Badge>
+                    <span className="text-sand-400">
+                      ({(predictResult.confidence * 100).toFixed(1)}% confidence)
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
     </div>
   )
 }
