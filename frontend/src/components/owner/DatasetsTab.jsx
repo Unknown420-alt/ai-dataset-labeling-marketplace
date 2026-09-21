@@ -1,26 +1,48 @@
 import { useEffect, useState } from 'react'
 import api from '../../api'
+import Button from '../ui/Button'
+import Input from '../ui/Input'
+import Select from '../ui/Select'
+import Card, { CardHeader } from '../ui/Card'
+import Badge from '../ui/Badge'
+import EmptyState from '../ui/EmptyState'
+import LoadingSpinner, { LoadingPage } from '../ui/LoadingSpinner'
+import Table, { TableHead, TableHeadCell, TableBody, TableRow, TableCell } from '../ui/Table'
+
+const statusVariant = {
+  ready: 'success',
+  draft: 'warning',
+  processing: 'info',
+}
 
 export default function DatasetsTab() {
   const [datasets, setDatasets] = useState([])
   const [form, setForm] = useState({ name: '', description: '', file_type: 'csv' })
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [creating, setCreating] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
 
   async function load() {
-    const res = await api.get('/datasets/')
-    setDatasets(res.data)
+    try {
+      setLoading(true)
+      const res = await api.get('/datasets/')
+      setDatasets(res.data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
-    load().catch((err) => setError(err.message))
+    load()
   }, [])
 
   async function handleCreate(e) {
     e.preventDefault()
-    setLoading(true)
+    setCreating(true)
     setError('')
     try {
       await api.post('/datasets/', form)
@@ -29,7 +51,7 @@ export default function DatasetsTab() {
     } catch (err) {
       setError(err.message)
     } finally {
-      setLoading(false)
+      setCreating(false)
     }
   }
 
@@ -64,65 +86,80 @@ export default function DatasetsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold mb-3">Create a dataset</h2>
-        <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <input
-            placeholder="Name"
+      {/* Create form */}
+      <Card>
+        <CardHeader title="Create a dataset" subtitle="Add a new dataset to organize your labeling work." />
+        <form onSubmit={handleCreate} className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <Input
+            placeholder="Dataset name"
             required
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="border rounded px-3 py-2"
           />
-          <input
-            placeholder="Description"
+          <Input
+            placeholder="Description (optional)"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="border rounded px-3 py-2"
           />
-          <div className="flex gap-2">
-            <select
-              value={form.file_type}
-              onChange={(e) => setForm({ ...form, file_type: e.target.value })}
-              className="border rounded px-3 py-2"
-            >
-              <option value="csv">CSV</option>
-              <option value="json">JSON</option>
-            </select>
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 disabled:opacity-50"
-            >
-              Create
-            </button>
-          </div>
+          <Select
+            value={form.file_type}
+            onChange={(e) => setForm({ ...form, file_type: e.target.value })}
+          >
+            <option value="csv">CSV</option>
+            <option value="json">JSON</option>
+          </Select>
+          <Button type="submit" loading={creating}>
+            Create dataset
+          </Button>
         </form>
-        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
-      </div>
+        {error && (
+          <div className="mt-3 flex items-center gap-2 p-3 rounded-lg bg-clay-50 text-clay-700 text-sm">
+            <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {error}
+          </div>
+        )}
+      </Card>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <h2 className="text-lg font-semibold px-6 pt-5 pb-3">My datasets</h2>
-        {datasets.length === 0 ? (
-          <p className="px-6 pb-5 text-gray-500">No datasets yet.</p>
+      {/* Datasets list */}
+      <Card padding={false}>
+        <div className="px-5 sm:px-6 pt-5 pb-3">
+          <CardHeader title="My datasets" subtitle={`${datasets.length} dataset${datasets.length !== 1 ? 's' : ''}`} />
+        </div>
+
+        {loading ? (
+          <div className="px-5 sm:px-6 pb-6">
+            <LoadingPage />
+          </div>
+        ) : datasets.length === 0 ? (
+          <EmptyState
+            title="No datasets yet"
+            description="Create your first dataset above to start organizing your labeling work."
+            icon={
+              <svg className="w-6 h-6 text-sand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            }
+          />
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left">
-              <tr>
-                <th className="px-6 py-2">Name</th>
-                <th className="px-6 py-2">Description</th>
-                <th className="px-6 py-2">Type</th>
-                <th className="px-6 py-2">Items</th>
-                <th className="px-6 py-2">Status</th>
-                <th className="px-6 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHead>
+              <TableHeadCell>Name</TableHeadCell>
+              <TableHeadCell className="hidden sm:table-cell">Description</TableHeadCell>
+              <TableHeadCell className="hidden md:table-cell">Type</TableHeadCell>
+              <TableHeadCell>Items</TableHeadCell>
+              <TableHeadCell>Status</TableHeadCell>
+              <TableHeadCell>Actions</TableHeadCell>
+            </TableHead>
+            <TableBody>
               {datasets.map((d) => (
-                <tr key={d.id} className="border-t">
-                  <td className="px-6 py-2">
+                <TableRow key={d.id}>
+                  <TableCell className="font-medium">
                     {editingId === d.id ? (
-                      <div className="flex gap-1">
+                      <div className="flex items-center gap-1.5">
                         <input
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
@@ -130,18 +167,18 @@ export default function DatasetsTab() {
                             if (e.key === 'Enter') handleRename(d.id)
                             if (e.key === 'Escape') setEditingId(null)
                           }}
-                          className="border rounded px-2 py-1 text-sm w-full"
+                          className="w-full min-w-0 px-2 py-1 text-sm rounded border border-sand-200 focus:ring-2 focus:ring-sky-100 focus:border-sky-400"
                           autoFocus
                         />
                         <button
                           onClick={() => handleRename(d.id)}
-                          className="text-green-600 hover:text-green-800 text-xs font-medium"
+                          className="text-moss-600 hover:text-moss-700 text-xs font-medium whitespace-nowrap"
                         >
                           Save
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="text-gray-500 hover:text-gray-700 text-xs"
+                          className="text-sand-400 hover:text-sand-600 text-xs whitespace-nowrap"
                         >
                           Cancel
                         </button>
@@ -149,34 +186,45 @@ export default function DatasetsTab() {
                     ) : (
                       d.name
                     )}
-                  </td>
-                  <td className="px-6 py-2 text-gray-600">{d.description || '-'}</td>
-                  <td className="px-6 py-2">{d.file_type}</td>
-                  <td className="px-6 py-2">{d.total_items}</td>
-                  <td className="px-6 py-2 capitalize">{d.status}</td>
-                  <td className="px-6 py-2">
-                    <div className="flex gap-2">
-                      <button
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell text-sand-500 max-w-[200px] truncate">
+                    {d.description || <span className="text-sand-300">—</span>}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <Badge variant="default">{d.file_type?.toUpperCase()}</Badge>
+                  </TableCell>
+                  <TableCell>{d.total_items}</TableCell>
+                  <TableCell>
+                    <Badge variant={statusVariant[d.status] || 'default'} dot>
+                      {d.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => startEdit(d)}
                         disabled={editingId === d.id}
-                        className="text-blue-600 hover:text-blue-800 text-xs font-medium disabled:opacity-40"
                       >
                         Edit
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleDelete(d.id, d.name)}
-                        className="text-red-600 hover:text-red-800 text-xs font-medium"
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
                       >
                         Delete
-                      </button>
+                      </Button>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
-      </div>
+      </Card>
     </div>
   )
 }
