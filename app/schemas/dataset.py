@@ -13,6 +13,10 @@ class DatasetCreate(DatasetBase):
     pass
 
 
+class DatasetUpdate(BaseModel):
+    name: Optional[str] = None
+
+
 class DatasetPublic(BaseModel):
     id: int
     name: str

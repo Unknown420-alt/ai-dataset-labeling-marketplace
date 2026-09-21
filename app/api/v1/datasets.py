@@ -3,10 +3,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.schemas.dataset import DatasetCreate, DatasetPublic
+from app.schemas.dataset import DatasetCreate, DatasetPublic, DatasetUpdate
 from app.services.security import get_current_user
 from app.services.responses import ok
-from app.models import User, Dataset
+from app.models import User, Dataset, LabelTask
 
 router = APIRouter(prefix="/datasets", tags=["datasets"])
 
@@ -57,3 +57,56 @@ async def get_dataset(
     if dataset is None:
         raise HTTPException(status_code=404, detail="Dataset not found")
     return ok(DatasetPublic.model_validate(dataset), "Dataset fetched")
+
+
+@router.patch("/{dataset_id}")
+async def update_dataset(
+    dataset_id: int,
+    payload: DatasetUpdate,
+    current: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Dataset).where(Dataset.id == dataset_id, Dataset.owner_id == current.id)
+    )
+    dataset = result.scalar_one_or_none()
+    if dataset is None:
+        # Distinguish 403 from 404: check if dataset exists but belongs to someone else
+        exists = await db.execute(select(Dataset).where(Dataset.id == dataset_id))
+        if exists.scalar_one_or_none() is not None:
+            raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    if payload.name is not None:
+        dataset.name = payload.name
+    await db.commit()
+    await db.refresh(dataset)
+    return ok(DatasetPublic.model_validate(dataset), "Dataset updated")
+
+
+@router.delete("/{dataset_id}")
+async def delete_dataset(
+    dataset_id: int,
+    current: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Dataset).where(Dataset.id == dataset_id, Dataset.owner_id == current.id)
+    )
+    dataset = result.scalar_one_or_none()
+    if dataset is None:
+        exists = await db.execute(select(Dataset).where(Dataset.id == dataset_id))
+        if exists.scalar_one_or_none() is not None:
+            raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    # Check for blocking label_tasks
+    tasks_result = await db.execute(
+        select(LabelTask).where(LabelTask.dataset_id == dataset_id)
+    )
+    if tasks_result.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="Cannot delete dataset: label tasks still reference it",
+        )
+    await db.delete(dataset)
+    await db.commit()
+    return ok(None, "Dataset deleted")
