@@ -1,0 +1,31 @@
+text,label
+"I was charged twice for my last order, need a refund",billing
+"My app keeps crashing every time I try to open it",technical
+"Can't log in to my account, password reset isn't working",account
+"Do you offer bulk pricing for corporate orders?",billing
+"The widget won't connect to my wifi no matter what I try",technical
+"I need to update my credit card on file",billing
+"Feature request: dark mode support for the mobile app",feature-request
+"Getting error code 502 whenever I submit a form",technical
+"How do I cancel my subscription?",account
+"Your product is 30 dollars cheaper on Amazon",billing
+"The sync feature stopped working after the last update",technical
+"I want to upgrade to the premium plan",billing
+"Can you add export to PDF functionality?",feature-request
+"App drains my battery really fast, is this a known issue?",technical
+"I need to change the email address on my account",account
+"Why was I charged a late fee when I paid on time?",billing
+"The search function returns completely irrelevant results",technical
+"Would be nice to have a mobile app for Android too",feature-request
+"I can't access my data since this morning",technical
+"My trial ended but I was charged without consenting",billing
+"Two factor authentication codes aren't being delivered",technical
+"How do I transfer my account to a new email?",account
+"Can you integrate with Slack? That would be really useful",feature-request
+"The dashboard loads super slow on mobile browsers",technical
+"I need an itemized invoice for tax purposes",billing
+"Login works on desktop but fails on my phone",technical
+"I'd love keyboard shortcuts for the main actions",feature-request
+"My team members can't see shared projects",technical
+"You overcharged me by fifteen dollars last billing cycle",billing
+"Can I get a discount for annual billing?",billing

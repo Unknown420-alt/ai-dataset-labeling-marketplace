@@ -1,0 +1,31 @@
+text,label
+"Production server is down and affecting all users",critical
+"When is the next scheduled maintenance window?",low
+"Customer data breach detected, need immediate response",critical
+"The office printer on the third floor needs new toner",low
+"Payment processing is failing for all transactions",critical
+"Can someone review my pull request when you get a chance?",low
+"Website is returning 500 errors for all checkout pages",critical
+"The break room coffee machine is making weird noises",low
+"Critical security vulnerability found in authentication module",critical
+"Need to schedule a team building event for next month",low
+"Database replication is lagging by over an hour",urgent
+"Could you update the contact page with new address?",low
+"SSL certificate expires in three days and hasn't been renewed",urgent
+"The office plants need watering before the long weekend",low
+"User reports indicate the mobile app is unresponsive",urgent
+"Please order more whiteboard markers for conference rooms",low
+"Backup system failed last night, no backups since Tuesday",critical
+"The quarterly newsletter template needs to be refreshed",low
+"Payment gateway returning timeout errors intermittently",urgent
+"We need to archive old project files from the shared drive",low
+"Customer-facing API has a rate limiting bug causing 429s",urgent
+"The annual company picnic needs a venue by end of month",medium
+"All email notifications are stuck in the outbound queue",critical
+"Can you fix the typo on the about us page?",low
+"Staging environment is completely inaccessible from VPN",urgent
+"New hire onboarding documents need to be updated",medium
+"Load balancer health checks are failing intermittently",urgent
+"The parking lot needs repaving before winter",medium
+"Search indexing job has been stuck for six hours",critical
+"We need to renew the domain name before it expires next week",medium

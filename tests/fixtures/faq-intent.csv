@@ -1,0 +1,31 @@
+text,label
+"How long does standard shipping usually take?",shipping
+"What's your return policy for items purchased on sale?",returns
+"Is there a warranty on electronic products?",warranty
+"How can I contact support if the chat is unavailable?",contact
+"How do I reset my account password?",account
+"Do you offer free shipping on orders over fifty dollars?",shipping
+"Can I return an item without the original packaging?",returns
+"Does the warranty cover accidental damage?",warranty
+"Is there a phone number I can call for help?",contact
+"I forgot my username, how do I recover it?",account
+"Can I track my shipment in real time?",shipping
+"How many days do I have to initiate a return?",returns
+"What parts are covered under the manufacturer warranty?",warranty
+"Do you have live chat support during weekends?",contact
+"How do I enable two factor authentication on my account?",account
+"Which carriers do you use for international shipping?",shipping
+"Can I exchange an item instead of getting a refund?",returns
+"Does the warranty transfer if I give the product as a gift?",warranty
+"What are your support hours during holidays?",contact
+"Can I change my email address after creating my account?",account
+"Is expedited shipping available for rural areas?",shipping
+"Are final sale items eligible for store credit?",returns
+"How do I file a warranty claim online?",warranty
+"Where can I find your physical office locations?",contact
+"How do I add a secondary payment method to my account?",account
+"Do you ship to P.O. boxes or only street addresses?",shipping
+"What condition does the product need to be in for a return?",returns
+"Is there an extended warranty option I can purchase?",warranty
+"Can I reach support through social media?",contact
+"How do I delete my account permanently?",account
