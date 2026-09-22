@@ -1,17 +1,15 @@
 # Changelog
 
-## Review-II (Phase 5-6: Grading + Docs)
+## Review-II (2026-09-21/22) — Top-notch upgrade
 
-- README rewritten with live-URL placeholders (Vercel frontend, Render backend), badge section (CI, Render health, coverage).
-- Demo credentials documented: `owner@demo.com` / `labeler@demo.com` (password: `ReviewPass123`), seeded by `scripts/seed_cloud.py`.
-- `VITE_API_URL` contract added: must include `/api/v1` suffix (see `frontend/src/api.js`).
-- Environment variables table split into backend and frontend sections.
-- Deployment table with platform and URL placeholders added.
-- Folder structure updated to reflect `scripts/`, `render.yaml`, `Procfile`.
+- **CRUD gap closed**: Added PATCH (rename) and DELETE endpoints for datasets (owner-scoped, 403 non-owner, 404 unknown, 409 if label tasks exist). Frontend inline edit/save/cancel added.
+- **UI/UX redesign**: New shared design system (`components/ui/` — Button, Input, Select, Card, Badge, Avatar, EmptyState, LoadingSpinner, Table). Warm/earthy palette (sand/clay/moss/sky), responsive desktop-table + mobile-card pattern, fadeIn animations.
+- **8 demo datasets**: Fixture CSVs (sentiment, spam, support-tickets, topics, product-reviews, headlines, FAQ-intent, urgency) with seed logic in `seed_cloud.py` (idempotent by name+owner).
+- **Training demo**: TF-IDF + MultinomialNB classifier (`POST /datasets/{id}/train`, `POST /datasets/{id}/predict`). In-memory model cache with 5-min TTL, min 10 labeled rows required, scikit-learn 1.9.0.
+- **Test coverage**: 27 tests total (auth, datasets CRUD+PATCH+DELETE, full labeler flow, training train+predict, security helpers).
+- **Live URLs**: Frontend `https://ai-dataset-labeling-marketplace.vercel.app/`, Backend `https://web-production-487e1.up.railway.app/`.
+- README rewritten with real URLs, new features, demo credentials, env vars (`DIRECT_URL`/`FRONTEND_URL`/`VITE_API_URL`), and seed steps.
 - CHANGELOG.md created (this file).
-- `.gitignore` updated: `backend.log`, `test_marketplace.db`, `.omo/` added.
-- Junk file `backend.log` deleted.
-- Verified: `pytest -q` 13 passed, `alembic heads` single head (6cea99c70951).
 
 ## Day 11 - Review-I (MVP)
 

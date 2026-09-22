@@ -2,18 +2,17 @@
 
 _A place where dataset owners get their raw data labeled by a distributed crowd of labelers, with an AI assistant in the loop._
 
-<!-- BADGES — replace <RENDER_URL> with your Render service URL, <VERCEL_URL> with your Vercel deploy URL -->
-[![CI](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg)](https://github.com/<OWNER>/<REPO>/actions)
-[![Render Health](https://img.shields.io/badge/Render-health--check-brightgreen?logo=render)](RENDER_HEALTH_URL)
-[![Coverage](https://img.shields.io/badge/coverage-13%2F13%20tests-blue)](#running-tests)
+[![CI](https://github.com/AI-DS-Labeling-Labeler/Labeling-Labeler/actions/workflows/ci.yml/badge.svg)](https://github.com/AI-DS-Labeling-Labeler/Labeling-Labeler/actions)
+[![Railway Health](https://img.shields.io/badge/Railway-health--check-brightgreen?logo=railway)](https://web-production-487e1.up.railway.app/health)
+[![Coverage](https://img.shields.io/badge/coverage-27%2F27%20tests-blue)](#running-tests)
 
 ## Live Demo
 
 | Component | URL |
 | --------- | --- |
-| Frontend  | `https://<VERCEL_URL>.vercel.app` |
-| Backend   | `https://<RENDER_URL>.onrender.com` |
-| API docs  | `https://<RENDER_URL>.onrender.com/docs` |
+| Frontend  | https://ai-dataset-labeling-marketplace.vercel.app/ |
+| Backend   | https://web-production-487e1.up.railway.app/ |
+| API docs  | https://web-production-487e1.up.railway.app/docs |
 
 > **Health check:** `GET /health` should return `{"success":true,"data":{"status":"ok"},"message":"healthy"}`.
 
@@ -52,7 +51,7 @@ Matches Section 4 of the project specification (Python track).
 | Testing          | Pytest (unit tests mandatory)                     |
 | API docs         | Auto-generated Swagger UI at `/docs`              |
 | CI/CD            | GitHub Actions (lint + tests)                     |
-| Hosting (Day 41) | Vercel (frontend), Render (backend + database)    |
+| Hosting (Day 41) | Vercel (frontend), Railway (backend)    |
 
 ## Features
 
@@ -61,8 +60,9 @@ Matches Section 4 of the project specification (Python track).
 - Two roles: dataset **owner** and **labeler**
 
 **Datasets module**
-- Create and list datasets (owners only see their own)
+- Create, list, rename (PATCH), and delete datasets (owners only see their own)
 - Declared `file_type`, items count, and status tracked
+- Delete guarded by 409 if label tasks still reference the dataset
 
 **Label tasks module**
 - Owners create labeling tasks against a dataset with a `label_schema` JSON
@@ -74,13 +74,18 @@ Matches Section 4 of the project specification (Python track).
 - List items with any AI suggestion shown
 - Submit labels (`source: human`) that update the item's `final_label`
 
+**Training demo (TF-IDF + Naive Bayes)**
+- Train a text classifier on labeled dataset items (`POST /datasets/{id}/train`)
+- Predict labels for new text (`POST /datasets/{id}/predict`)
+- In-memory model cache with 5-minute TTL, minimum 10 labeled rows required
+
 **API convention**
 - Every response follows one envelope: `{ "success", "data", "message" }`
 - Correct HTTP status codes: 200/201 success, 400/401/404 client errors
 
 ## Screenshots
 
-To be added once the frontend is hosted (Day 41).
+_Live at_ https://ai-dataset-labeling-marketplace.vercel.app/ _— login with demo credentials below._
 
 ## Getting Started
 
@@ -173,20 +178,20 @@ Creates `owner@demo.com` / `labeler@demo.com` with password `ReviewPass123`.
 
 The frontend reads `import.meta.env.VITE_API_URL || '/api/v1'` (see `frontend/src/api.js`).
 
-- **Production:** set to `https://<RENDER_URL>.onrender.com/api/v1` (trailing `/api/v1` is mandatory)
+- **Production:** set to `https://web-production-487e1.up.railway.app/api/v1` (trailing `/api/v1` is mandatory)
 - **Local dev:** leave unset; the Vite dev server proxies `/api` to the backend automatically
 - **Why `/api/v1`:** all backend routes are mounted under the `/api/v1` prefix (`app/api/v1/`). Without this suffix the frontend would 404 on every request.
 
 Example Vercel configuration:
 ```
-VITE_API_URL=https://labeling-marketplace-api.onrender.com/api/v1
+VITE_API_URL=https://web-production-487e1.up.railway.app/api/v1
 ```
 
 ## API Documentation
 
 Swagger UI is served at:
 - **Local:** http://127.0.0.1:8000/docs
-- **Production:** `https://<RENDER_URL>.onrender.com/docs`
+- **Production:** `https://web-production-487e1.up.railway.app/docs`
 
 ## Running Tests
 
@@ -194,19 +199,19 @@ Swagger UI is served at:
 python -m pytest
 ```
 
-Current coverage: **13 tests** across auth, datasets/tasks, the full labeler flow (claim → items → submit), and security helpers. A `black --check` lint gate runs in CI.
+Current coverage: **27 tests** across auth, datasets/tasks (CRUD + PATCH + DELETE), the full labeler flow (claim → items → submit), training (train + predict), and security helpers. A `black --check` lint gate runs in CI.
 
 ## Deployment
 
 | Component | Platform | URL |
 | --------- | -------- | --- |
-| Frontend  | Vercel   | `https://<VERCEL_URL>.vercel.app` |
-| Backend   | Render   | `https://<RENDER_URL>.onrender.com` |
+| Frontend  | Vercel   | https://ai-dataset-labeling-marketplace.vercel.app/ |
+| Backend   | Railway  | https://web-production-487e1.up.railway.app/ |
 | Database  | Supabase (PostgreSQL) | Configured via `DATABASE_URL` / `DIRECT_URL` |
 
 **CI pipeline** (`.github/workflows/ci.yml`): lint (black) → test (pytest) on every push/PR to `main`.
 
-**Render pre-deploy:** `alembic upgrade head` → `seed_cloud.py` (idempotent).
+**Railway pre-deploy:** `alembic upgrade head` → `seed_cloud.py` (idempotent).
 
 ## Folder Structure
 
