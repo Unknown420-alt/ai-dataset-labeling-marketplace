@@ -12,13 +12,18 @@ until retrained.
 import math
 import os
 import re
+import tempfile
 import time
 from collections import Counter
 from typing import Any
 
 import joblib
 
-MODEL_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "models")
+MODEL_DIR = (
+    os.path.join(tempfile.gettempdir(), "labeling_models")
+    if os.environ.get("VERCEL") == "1"
+    else os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "models")
+)
 
 _memory_cache: dict[int, tuple[dict, float]] = {}
 
