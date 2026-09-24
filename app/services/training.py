@@ -140,9 +140,7 @@ def _load(dataset_id: int) -> dict | None:
 
 def _extract(items: list[dict[str, Any]]) -> tuple[list[str], list[Any], bool]:
     """Extract (texts, targets, is_multilabel) from DataItem dicts."""
-    texts: list[str] = []
-    targets: list[Any] = []
-    multi = False
+    raw: list[tuple[str, Any, bool]] = []
     for item in items:
         content = item.get("content_json") or {}
         final = item.get("final_label") or {}
@@ -150,12 +148,18 @@ def _extract(items: list[dict[str, Any]]) -> tuple[list[str], list[Any], bool]:
         if not text:
             continue
         if isinstance(final.get("labels"), list) and final["labels"]:
-            multi = True
-            targets.append(sorted(set(str(l) for l in final["labels"])))
-            texts.append(text)
+            raw.append((text, sorted(set(str(l) for l in final["labels"])), True))
         elif final.get("label"):
-            targets.append(str(final["label"]))
-            texts.append(text)
+            raw.append((text, str(final["label"]), False))
+    multi = any(is_multi for _, _, is_multi in raw)
+    texts: list[str] = []
+    targets: list[Any] = []
+    for text, target, _ in raw:
+        # Mixed datasets: a lone label still counts as one vote in multilabel mode.
+        if multi and not isinstance(target, list):
+            target = [target]
+        texts.append(text)
+        targets.append(target)
     return texts, targets, multi
 
 
