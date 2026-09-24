@@ -27,7 +27,7 @@ def _signup(client, role="owner"):
         json={
             "email": email,
             "full_name": "Patch/Delete Tester",
-            "password": "secret123",
+            "password": "Str0ng!Pass",
             "role": role,
         },
     )

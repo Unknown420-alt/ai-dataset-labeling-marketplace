@@ -9,13 +9,13 @@ from app.services.security import (
 
 
 def test_password_round_trip():
-    hashed = hash_password("secret123")
-    assert hashed != "secret123"
-    assert verify_password("secret123", hashed)
+    hashed = hash_password("Str0ng!Pass")
+    assert hashed != "Str0ng!Pass"
+    assert verify_password("Str0ng!Pass", hashed)
 
 
 def test_password_rejects_wrong_value():
-    hashed = hash_password("secret123")
+    hashed = hash_password("Str0ng!Pass")
     assert not verify_password("wrong-pass", hashed)
 
 

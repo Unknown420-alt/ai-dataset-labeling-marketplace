@@ -12,4 +12,5 @@ class DataItem(Base):
     ai_suggestion = Column(JSON, nullable=True)
     ai_confidence = Column(Float, default=0.0)
     final_label = Column(JSON, nullable=True)
+    gold_label = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=utcnow, nullable=False)

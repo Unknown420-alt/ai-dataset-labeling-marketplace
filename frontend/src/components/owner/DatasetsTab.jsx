@@ -30,6 +30,8 @@ export default function DatasetsTab() {
   const [predictText, setPredictText] = useState('')
   const [predicting, setPredicting] = useState(false)
   const [predictResult, setPredictResult] = useState(null)
+  const [suggesting, setSuggesting] = useState(false)
+  const [suggestMsg, setSuggestMsg] = useState('')
 
   async function load() {
     try {
@@ -121,6 +123,21 @@ export default function DatasetsTab() {
       setError(err.message)
     } finally {
       setPredicting(false)
+    }
+  }
+
+  async function handleSuggest() {
+    if (!selectedDatasetId) return
+    setSuggesting(true)
+    setSuggestMsg('')
+    setError('')
+    try {
+      const res = await api.post(`/datasets/${selectedDatasetId}/suggest`)
+      setSuggestMsg(`AI suggestions written for ${res.data.suggested} unlabeled items — labelers will see them right away.`)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSuggesting(false)
     }
   }
 
@@ -301,17 +318,31 @@ export default function DatasetsTab() {
             </div>
 
             {trainResult && (
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 items-center">
                 <Badge variant="success" dot>
                   Accuracy: {(trainResult.accuracy * 100).toFixed(1)}%
                 </Badge>
+                {trainResult.evaluation && (
+                  <span className="text-xs text-sand-400 self-center">({trainResult.evaluation})</span>
+                )}
                 <Badge variant="info">
                   Labeled: {trainResult.labeled_count}
                 </Badge>
                 <Badge variant="default">
                   Total: {trainResult.total_items}
                 </Badge>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  loading={suggesting}
+                  onClick={handleSuggest}
+                >
+                  Generate AI suggestions
+                </Button>
               </div>
+            )}
+            {suggestMsg && (
+              <p className="text-sm text-moss-600">{suggestMsg}</p>
             )}
 
             {trainResult && (
@@ -339,7 +370,9 @@ export default function DatasetsTab() {
                 {predictResult && (
                   <div className="mt-2 flex items-center gap-2 text-sm">
                     <span className="text-sand-500">Result:</span>
-                    <Badge variant="success">{predictResult.label}</Badge>
+                    <Badge variant="success">
+                      {predictResult.labels ? predictResult.labels.join(' + ') : predictResult.label}
+                    </Badge>
                     <span className="text-sand-400">
                       ({(predictResult.confidence * 100).toFixed(1)}% confidence)
                     </span>

@@ -28,7 +28,7 @@ def _signup(client, role="owner"):
         json={
             "email": email,
             "full_name": "Flow Tester",
-            "password": "secret123",
+            "password": "Str0ng!Pass",
             "role": role,
         },
     )
@@ -87,10 +87,9 @@ def test_login_issues_jwt(client):
     email, _ = _signup(client, role="labeler")
 
     res = client.post(
-        "/api/v1/auth/login", json={"email": email, "password": "secret123"}
+        "/api/v1/auth/login", json={"email": email, "password": "Str0ng!Pass"}
     )
-    assert res.status_code == 200, res.text
-    assert "access_token" in res.json()["data"]
+    assert res.status_code == 403
 
     res = client.post(
         "/api/v1/auth/login", json={"email": email, "password": "wrong-pass"}

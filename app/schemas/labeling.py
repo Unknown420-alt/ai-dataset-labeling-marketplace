@@ -27,6 +27,7 @@ class SubmissionPublic(BaseModel):
     labeler_id: int
     label_value: dict
     source: str
+    status: str = "pending"
     created_at: datetime
 
     model_config = {"from_attributes": True}

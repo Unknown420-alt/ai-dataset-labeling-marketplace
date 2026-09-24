@@ -30,5 +30,6 @@ class LabelTask(Base):
     label_schema = Column(JSON, nullable=False)
     num_labelers = Column(Integer, default=3, nullable=False)
     ai_enabled = Column(Integer, default=0, nullable=False)
+    is_multilabel = Column(Integer, default=0, nullable=False)
     status = Column(Enum(TaskStatus), default=TaskStatus.DRAFT, nullable=False)
     created_at = Column(DateTime, default=utcnow, nullable=False)

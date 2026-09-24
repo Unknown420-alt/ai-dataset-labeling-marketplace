@@ -20,6 +20,13 @@ class Settings(BaseSettings):
         "postgresql+asyncpg://postgres:postgres@localhost:5432/marketplace"
     )
     environment: str = "development"
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o-mini"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
 
 
 settings = Settings()

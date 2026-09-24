@@ -10,4 +10,5 @@ class LabelSubmission(Base):
     labeler_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     label_value = Column(JSON, nullable=False)
     source = Column(String(50), default="human")
+    status = Column(String(20), default="pending", nullable=False)
     created_at = Column(DateTime, default=utcnow, nullable=False)

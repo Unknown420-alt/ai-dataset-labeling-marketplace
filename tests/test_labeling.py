@@ -27,7 +27,7 @@ def _signup(client, role):
         json={
             "email": _fresh_email(),
             "full_name": "Labeling Tester",
-            "password": "secret123",
+            "password": "Str0ng!Pass",
             "role": role,
         },
     )
@@ -137,3 +137,59 @@ def test_submit_to_missing_item_404(client):
         headers=labeler_headers,
     )
     assert res.status_code == 404
+
+
+def test_bulk_upload_json_and_jsonl(client):
+    owner_headers = _signup(client, role="owner")
+    res = client.post(
+        "/api/v1/datasets/",
+        json={"name": "bulk_ds", "description": "d", "file_type": "json"},
+        headers=owner_headers,
+    )
+    dataset_id = res.json()["data"]["id"]
+    res = client.post(
+        "/api/v1/tasks/",
+        json={
+            "dataset_id": dataset_id,
+            "title": "bulk task",
+            "instructions": "cat or dog",
+            "label_schema": {"cat": "cat", "dog": "dog"},
+            "num_labelers": 1,
+        },
+        headers=owner_headers,
+    )
+    task_id = res.json()["data"]["id"]
+
+    payload = [
+        {"text": "a cat naps", "label": "cat"},
+        {"text": "dog runs fast"},
+        "a stray cat hides",
+    ]
+    res = client.post(
+        f"/api/v1/tasks/{task_id}/items/upload",
+        files={"file": ("bulk.json", io.BytesIO(__import__("json").dumps(payload).encode()), "application/json")},
+        headers=owner_headers,
+    )
+    assert res.status_code == 201, res.text
+    assert res.json()["data"]["uploaded"] == 3
+
+    lines = '{"text": "puppy plays", "label": "dog"}\n"just a sentence"\n'
+    res = client.post(
+        f"/api/v1/tasks/{task_id}/items/upload",
+        files={"file": ("more.jsonl", io.BytesIO(lines.encode()), "application/jsonl")},
+        headers=owner_headers,
+    )
+    assert res.status_code == 201, res.text
+    assert res.json()["data"]["uploaded"] == 2
+
+    res = client.get(f"/api/v1/tasks/{task_id}/items", headers=owner_headers)
+    items = res.json()["data"]
+    assert len(items) == 5
+    assert [i["row_index"] for i in items] == [1, 2, 3, 4, 5]
+
+    res = client.post(
+        f"/api/v1/tasks/{task_id}/items/upload",
+        files={"file": ("bad.json", io.BytesIO(b"not json"), "application/json")},
+        headers=owner_headers,
+    )
+    assert res.status_code == 400

@@ -9,6 +9,7 @@ class LabelTaskBase(BaseModel):
     label_schema: dict
     num_labelers: int = 3
     ai_enabled: bool = False
+    is_multilabel: bool = False
 
 
 class LabelTaskCreate(LabelTaskBase):
@@ -23,6 +24,7 @@ class LabelTaskPublic(BaseModel):
     label_schema: dict
     num_labelers: int
     ai_enabled: bool
+    is_multilabel: bool = False
     status: str
     created_at: datetime
 

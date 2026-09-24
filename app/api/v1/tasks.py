@@ -24,6 +24,7 @@ async def create_task(
         label_schema=payload.label_schema,
         num_labelers=payload.num_labelers,
         ai_enabled=payload.ai_enabled,
+        is_multilabel=1 if payload.is_multilabel else 0,
     )
     db.add(task)
     await db.commit()

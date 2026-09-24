@@ -5,6 +5,8 @@ from app.models.data_item import DataItem
 from app.models.submission import LabelSubmission
 from app.models.task_claim import TaskClaim
 from app.models.ai_suggestion import AISuggestion
+from app.models.audit import AuditLog
+from app.models.otp import OTPCode
 
 __all__ = [
     "User",
@@ -17,4 +19,6 @@ __all__ = [
     "LabelSubmission",
     "TaskClaim",
     "AISuggestion",
+    "AuditLog",
+    "OTPCode",
 ]

@@ -5,6 +5,7 @@ Predict: owner predicts label for text → returns label + confidence
 """
 
 import asyncio
+import io
 import time
 
 import pytest
@@ -31,7 +32,7 @@ def _signup(client, role="owner"):
         json={
             "email": email,
             "full_name": "Train Tester",
-            "password": "secret123",
+            "password": "Str0ng!Pass",
             "role": role,
         },
     )
@@ -214,3 +215,211 @@ def test_predict_404_unknown_id(client):
     )
     assert res.status_code == 404, res.text
     assert res.json()["success"] is False
+
+
+def test_suggest_needs_training_then_fills_unlabeled(client):
+    """Suggest without a model → 422; after train → fills suggestions."""
+    _, headers = _signup(client)
+    dataset_id = _create_dataset(client, headers, name="suggest-ds")
+    texts = [
+        ("I love this phone", "positive"),
+        ("I adore this phone", "positive"),
+        ("Great phone, love it", "positive"),
+        ("Excellent device", "positive"),
+        ("Superb quality phone", "positive"),
+        ("Terrible phone", "negative"),
+        ("Awful device", "negative"),
+        ("Horrible phone experience", "negative"),
+        ("Worst purchase ever", "negative"),
+        ("Hate this phone", "negative"),
+    ]
+    unlabeled = ["I love this gadget", "Terrible gadget", "What a superb thing"]
+    _seed_labeled_items(dataset_id, texts)
+
+    async def _add_unlabeled():
+        async with AsyncSessionLocal() as db:
+            from sqlalchemy import select
+
+            task = (
+                (
+                    await db.execute(
+                        select(LabelTask).where(LabelTask.dataset_id == dataset_id)
+                    )
+                )
+                .scalars()
+                .first()
+            )
+            for i, text in enumerate(unlabeled, start=100):
+                db.add(
+                    DataItem(
+                        task_id=task.id,
+                        row_index=i,
+                        content_json={"text": text},
+                    )
+                )
+            await db.commit()
+
+    asyncio.run(_add_unlabeled())
+
+    res = client.post(f"/api/v1/datasets/{dataset_id}/suggest", headers=headers)
+    assert res.status_code == 422, res.text
+
+    res = client.post(f"/api/v1/datasets/{dataset_id}/train", headers=headers)
+    assert res.status_code == 200, res.text
+
+    res = client.post(f"/api/v1/datasets/{dataset_id}/suggest", headers=headers)
+    assert res.status_code == 200, res.text
+    assert res.json()["data"]["suggested"] == 3
+
+    res = client.post(f"/api/v1/datasets/{dataset_id}/suggest", headers=headers)
+    assert res.json()["data"]["suggested"] == 3
+
+
+def test_llm_suggest_fails_closed_without_key(client):
+    _, headers = _signup(client)
+    dataset_id = _create_dataset(client, headers, name="llm-ds")
+    res = client.post(
+        f"/api/v1/datasets/{dataset_id}/suggest-llm", json={}, headers=headers
+    )
+    assert res.status_code == 422, res.text
+    assert "OPENAI_API_KEY" in res.json()["message"]
+
+
+def test_llm_suggest_mocked_success(client, monkeypatch):
+    from app.services import llm as llm_svc
+
+    async def _noop(*a, **k):
+        return None
+
+    def _fake_suggest(api_key, model, instructions, labels, texts):
+        assert labels == ["cat", "dog"]
+        return {0: "cat", 1: "dog"}
+
+    monkeypatch.setattr(llm_svc, "suggest_batch", _fake_suggest)
+    monkeypatch.setattr("app.core.config.settings.openai_api_key", "test-key")
+    _, headers = _signup(client)
+    dataset_id = _create_dataset(client, headers, name="llm-ok-ds")
+    res = client.post(
+        "/api/v1/tasks/",
+        json={
+            "dataset_id": dataset_id,
+            "title": "t",
+            "instructions": "pick",
+            "label_schema": {"cat": "cat", "dog": "dog"},
+            "num_labelers": 1,
+        },
+        headers=headers,
+    )
+    task_id = res.json()["data"]["id"]
+    csv_data = io.BytesIO(b'"a cat",cat\n"a dog",dog\n')
+    client.post(
+        f"/api/v1/tasks/{task_id}/items/upload",
+        files={"file": ("s.csv", csv_data, "text/csv")},
+        headers=headers,
+    )
+    res = client.post(
+        f"/api/v1/datasets/{dataset_id}/suggest-llm", json={}, headers=headers
+    )
+    assert res.status_code == 200, res.text
+    assert res.json()["data"]["suggested"] == 2
+    monkeypatch.setattr("app.core.config.settings.openai_api_key", "")
+
+
+def test_train_reports_evaluation_method(client):
+    _, headers = _signup(client)
+    dataset_id = _create_dataset(client, headers, name="eval-ds")
+    texts = [(f"good thing number {i}", "positive") for i in range(12)]
+    texts += [(f"bad thing number {i}", "negative") for i in range(12)]
+    _seed_labeled_items(dataset_id, texts)
+    res = client.post(f"/api/v1/datasets/{dataset_id}/train", headers=headers)
+    assert res.status_code == 200, res.text
+    assert res.json()["data"]["evaluation"] == "held-out 20%"
+
+
+def test_model_survives_cache_clear_and_multilabel_trains(client):
+    """Disk persistence: clear memory cache → predict still works."""
+    from app.services import training as tsvc
+
+    _, headers = _signup(client)
+    dataset_id = _create_dataset(client, headers, name="persist-ds")
+    texts = [(f"good phone number {i}", "positive") for i in range(6)]
+    texts += [(f"bad phone number {i}", "negative") for i in range(6)]
+    _seed_labeled_items(dataset_id, texts)
+    res = client.post(f"/api/v1/datasets/{dataset_id}/train", headers=headers)
+    assert res.status_code == 200, res.text
+    tsvc.clear_cache()
+    res = client.post(
+        f"/api/v1/datasets/{dataset_id}/predict",
+        json={"text": "good phone"},
+        headers=headers,
+    )
+    assert res.status_code == 200, res.text
+    assert res.json()["data"]["label"] == "positive"
+
+
+def test_multilabel_train_predict_suggest(client):
+    """Multilabel tasks train, predict lists, and suggest writes label lists."""
+    _, headers = _signup(client)
+    dataset_id = _create_dataset(client, headers, name="multi-ds")
+
+    async def _seed():
+        async with AsyncSessionLocal() as db:
+            task = LabelTask(
+                dataset_id=dataset_id,
+                title="multi",
+                instructions="pick all",
+                label_schema={"cat": "cat", "dog": "dog"},
+                status="open",
+                is_multilabel=1,
+            )
+            db.add(task)
+            await db.commit()
+            await db.refresh(task)
+            samples = [
+                ("cat sleeps here", ["cat"]),
+                ("dog barks loudly", ["dog"]),
+                ("cat and dog play", ["cat", "dog"]),
+                ("my cat naps", ["cat"]),
+                ("big dog runs", ["dog"]),
+                ("cat meets dog", ["cat", "dog"]),
+                ("little cat purrs", ["cat"]),
+                ("old dog sleeps", ["dog"]),
+                ("cat dog friends", ["cat", "dog"]),
+                ("cute cat yawns", ["cat"]),
+                ("wild dog howls", ["dog"]),
+                ("cat plus dog", ["cat", "dog"]),
+            ]
+            for i, (text, labels) in enumerate(samples):
+                db.add(
+                    DataItem(
+                        task_id=task.id,
+                        row_index=i,
+                        content_json={"text": text},
+                        final_label={"labels": labels},
+                    )
+                )
+            db.add(
+                DataItem(
+                    task_id=task.id,
+                    row_index=99,
+                    content_json={"text": "cat naps quietly"},
+                )
+            )
+            await db.commit()
+            return task.id
+
+    task_id = asyncio.run(_seed())
+    res = client.post(f"/api/v1/datasets/{dataset_id}/train", headers=headers)
+    assert res.status_code == 200, res.text
+    assert res.json()["data"]["task_type"] == "multilabel"
+
+    res = client.post(
+        f"/api/v1/datasets/{dataset_id}/predict",
+        json={"text": "cat and dog together"},
+        headers=headers,
+    )
+    assert res.status_code == 200, res.text
+    assert set(res.json()["data"]["labels"]) == {"cat", "dog"}
+
+    res = client.post(f"/api/v1/datasets/{dataset_id}/suggest", headers=headers)
+    assert res.json()["data"]["suggested"] == 1

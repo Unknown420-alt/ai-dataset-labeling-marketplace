@@ -1,14 +1,35 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import api from '../api'
 import Button from './ui/Button'
 import Input from './ui/Input'
 import Select from './ui/Select'
 import Card from './ui/Card'
 
+function checkLocal(password, rules) {
+  const has = (re) => re.test(password)
+  const results = {}
+  for (const r of rules) {
+    if (r.key === 'length') results.length = password.length >= 8
+    else if (r.key === 'upper') results.upper = has(/[A-Z]/)
+    else if (r.key === 'lower') results.lower = has(/[a-z]/)
+    else if (r.key === 'digit') results.digit = has(/[0-9]/)
+    else if (r.key === 'special') results.special = has(/[^A-Za-z0-9]/)
+  }
+  return results
+}
+
 export default function Signup({ onAuth, goToLogin }) {
   const [form, setForm] = useState({ email: '', full_name: '', password: '', role: 'labeler' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [rules, setRules] = useState([])
+
+  useEffect(() => {
+    api.get('/auth/password-rules').then((res) => setRules(res.data)).catch(() => {})
+  }, [])
+
+  const passed = checkLocal(form.password, rules)
+  const allOk = rules.length > 0 && rules.every((r) => passed[r.key])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -16,7 +37,15 @@ export default function Signup({ onAuth, goToLogin }) {
     setLoading(true)
     try {
       const res = await api.post('/auth/signup', form)
-      onAuth(res.data.access_token, res.data.user)
+      if (res.data.requires_verification) {
+        onAuth(null, null, {
+          requiresVerification: true,
+          email: form.email,
+          devCode: res.data.dev_code,
+        })
+      } else {
+        onAuth(res.data.access_token, res.data.user)
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -61,10 +90,26 @@ export default function Signup({ onAuth, goToLogin }) {
               label="Password"
               type="password"
               required
-              placeholder="At least 6 characters"
+              placeholder="Make it a strong one"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
             />
+            {rules.length > 0 && form.password && (
+              <ul className="space-y-1 rounded-lg bg-sand-50 border border-sand-100 px-3 py-2">
+                {rules.map((r) => {
+                  const ok = !!passed[r.key]
+                  return (
+                    <li key={r.key} className={`flex items-center gap-2 text-xs ${ok ? 'text-moss-600' : 'text-sand-400'}`}>
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold
+                        ${ok ? 'bg-moss-500 text-white' : 'bg-sand-200 text-sand-400'}`}>
+                        {ok ? '✓' : '·'}
+                      </span>
+                      {r.label}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
             <Select
               label="I want to"
               value={form.role}
@@ -85,7 +130,7 @@ export default function Signup({ onAuth, goToLogin }) {
               </div>
             )}
 
-            <Button type="submit" loading={loading} className="w-full">
+            <Button type="submit" loading={loading} disabled={form.password.length > 0 && !allOk} className="w-full">
               Create account
             </Button>
           </form>

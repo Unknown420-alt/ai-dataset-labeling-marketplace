@@ -18,4 +18,5 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     role = Column(Enum(UserRole), default=UserRole.LABELER, nullable=False)
     is_active = Column(Integer, default=1, nullable=False)
+    email_verified = Column(Integer, default=1, nullable=False)
     created_at = Column(DateTime, default=utcnow, nullable=False)

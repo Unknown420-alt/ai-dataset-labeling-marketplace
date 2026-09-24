@@ -95,3 +95,5 @@ test_marketplace.db
 
 # Internal planning (do not commit)
 .omo/
+.vercel
+.env*
